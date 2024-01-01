@@ -1,4 +1,4 @@
-const webpack = require('webpack');
+const HtmlWebpackPlugin = require('html-webpack-plugin'); // Thêm dòng này
 const path = require('path');
 
 module.exports = {
@@ -21,5 +21,10 @@ module.exports = {
             "zlib": require.resolve("browserify-zlib"),
         }
     },
+    plugins: [
+        new HtmlWebpackPlugin({
+            template: 'public/index.html', // Thay đổi đường dẫn tùy thuộc vào cấu trúc của dự án bạn
+        }),
+    ],
     target: 'node',
 };
