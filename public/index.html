@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Table Example</title>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <!-- Thêm thư viện SheetJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+</head>
+
+<body>
+    <!-- Thêm nút để xuất Excel -->
+    <button id="exportBtn">Xuất Excel</button>
+    <table id="dataTable" border="1">
+        <thead>
+            <tr>
+                <th>Posting Date</th>
+                <th>Transaction Date</th>
+                <th>Account No</th>
+                <th>Credit Amount</th>
+                <th>Debit Amount</th>
+                <th>Currency</th>
+                <th>Description</th>
+                <th>Available Balance</th>
+                <!-- Thêm các tên cột khác tùy thuộc vào dữ liệu của bạn -->
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data from the API will be placed here -->
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="3">Tổng</td>
+                <td id="totalCreditAmount"></td>
+                <td id="totalDebitAmount"></td>
+                <td colspan="4"></td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <script>
+        $(document).ready(function () {
+            $.ajax({
+                url: 'http://localhost:3000/api', // Use your server URL
+                type: 'GET',
+                success: function (data) {
+                    displayData(data.data);
+                    calculateTotal(data.data);
+                },
+                error: function (error) {
+                    console.log('Error:', error);
+                }
+            });
+
+            // Thêm sự kiện cho nút xuất Excel
+            $('#exportBtn').on('click', function () {
+                exportToExcel('dataTable');
+            });
+
+            function displayData(data) {
+                var tableBody = $('#dataTable tbody');
+
+                $.each(data, function (index, item) {
+                    var newRow = '<tr>';
+                    newRow += '<td>' + item.postingDate + '</td>';
+                    newRow += '<td>' + item.transactionDate + '</td>';
+                    newRow += '<td>' + item.accountNo + '</td>';
+                    newRow += '<td>' + formatNumber(item.creditAmount) + '</td>';
+                    newRow += '<td>' + formatNumber(item.debitAmount) + '</td>';
+                    newRow += '<td>' + item.currency + '</td>';
+                    newRow += '<td>' + item.description + '</td>';
+                    newRow += '<td>' + formatNumber(item.availableBalance) + '</td>';
+                    // Thêm các cột khác tương tự tùy thuộc vào dữ liệu của bạn
+                    newRow += '</tr>';
+
+                    tableBody.append(newRow);
+                });
+            }
+
+            function calculateTotal(data) {
+                var totalCreditAmount = 0;
+                var totalDebitAmount = 0;
+
+                // Tính tổng Credit Amount và Debit Amount
+                $.each(data, function (index, item) {
+                    totalCreditAmount += parseFloat(item.creditAmount) || 0;
+                    totalDebitAmount += parseFloat(item.debitAmount) || 0;
+                });
+
+                // Hiển thị tổng trong bảng
+                $('#totalCreditAmount').text(formatNumber(totalCreditAmount));
+                $('#totalDebitAmount').text(formatNumber(totalDebitAmount));
+            }
+
+            // Hàm để định dạng số thành chuỗi
+            function formatNumber(amount) {
+                return parseFloat(amount).toLocaleString('en-US');
+            }
+            
+            function exportToExcel(tableId) {
+                var table = document.getElementById(tableId);
+                var ws = XLSX.utils.table_to_sheet(table);
+
+                // Tạo một workbook và thêm sheet vào đó
+                var wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+
+                // Chuyển workbook thành blob
+                var blob = XLSX.write(wb, { bookType: 'xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', type: 'blob' });
+
+                // Tạo URL cho blob và tạo ra một đường link để tải xuống
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = 'exported_data.xlsx';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+        });
+
+
+    </script>
+
+</body>
+
+</html>
